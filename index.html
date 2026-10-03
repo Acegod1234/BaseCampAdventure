@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Base Camp Adventure</title><style>html,body{margin:0;height:100%;background:white}iframe{display:block;border:0;width:100%;height:100%}.loading{font:16px Arial;padding:40px;color:#203c34}</style></head><body><div class="loading">Opening Base Camp Adventure…</div><script src="website.js"></script><script>
+const bundle=window.BASECAMP_BUNDLE;
+const urls={};for(const [name,asset] of Object.entries(bundle.assets)){const raw=atob(asset.data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);urls[name]=URL.createObjectURL(new Blob([bytes],{type:asset.type}));}
+const replaceAssets=text=>text.replace(/assets\/[A-Za-z0-9_./% -]+\.(?:jpg|jpeg|png|woff2|txt)/g,name=>urls[name]||name);
+const frame=document.createElement('iframe');frame.title='Base Camp Adventure website';document.querySelector('.loading').replaceWith(frame);
+const safe=value=>JSON.stringify(value).replace(/</g,'\u003c');
+window.openBaseCampPage=route=>{const hash='#/'+route;if(location.hash===hash)render();else location.hash=hash};
+function render(){
+ const route=location.hash.startsWith('#/')?location.hash.slice(2):'index.html',url=new URL(route,'https://local.invalid/'),file=url.pathname.slice(1),html=bundle.pages[file]||bundle.pages['index.html'];
+ const init='window.__routeFile='+safe(file)+';window.__routeSearch='+safe(url.search)+';window.__asset=name=>parent.__baseCampAssets[name]||name;';
+ const navigation=`document.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;const href=a.getAttribute('href');if(!href)return;if(href.startsWith('#')){e.preventDefault();document.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView({behavior:'smooth'});return}if(/^(https?:|mailto:|tel:|blob:|data:)/i.test(href))return;if(/\\.html(?:[?#]|$)/.test(href)){e.preventDefault();parent.openBaseCampPage(href)}});`;
+ let documentHtml=html.replace(/<link[^>]+rel="stylesheet"[^>]*>/g,'').replace(/<script[^>]+src="[^"]+"[^>]*><\/script>/g,'');
+ documentHtml=documentHtml.replace('</head>','<style>'+replaceAssets(bundle.css)+'</style></head>');
+ documentHtml=replaceAssets(documentHtml);
+ const code=init+replaceAssets(bundle.data)+'\n'+replaceAssets(bundle.script)+'\n'+navigation+(url.hash?'\ndocument.getElementById('+safe(decodeURIComponent(url.hash.slice(1)))+')?.scrollIntoView();':'');
+ documentHtml=documentHtml.replace('</body>',()=>'<script>'+code.replace(/<\/script/gi,'<\\/script')+'<\/script></body>');
+ frame.srcdoc=documentHtml;
+ document.title=(html.match(/<title>(.*?)<\/title>/)||[])[1]||'Base Camp Adventure';
+}
+window.__baseCampAssets=urls;addEventListener('hashchange',render);render();
+</script></body></html>
