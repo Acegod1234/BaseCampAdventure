@@ -1,5 +1,142 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Base Camp Adventure</title><style>html,body{margin:0;height:100%;background:white}iframe{display:block;border:0;width:100%;height:100%}.loading{font:16px Arial;padding:40px;color:#203c34}</style></head><body><div class="loading">Opening Base Camp Adventure…</div><script src="website.js"></script><script>
 const bundle=window.BASECAMP_BUNDLE;
+// Use the downloaded original-resolution landscapes inside the homepage title.
+const titleSlides=[
+ ['Trips/Trekking/Everest Region/3 Days Everest Base Camp Trek/01-Everest Lhotse, Nuptse and Khumbu glacier.jpg','EVEREST'],
+ ['Trips/Trekking/Everest Region/Everest Base Camp and Gokyo Trek/10-All sizes-16926939331_04ac85fc49_5k.jpg','GOKYO LAKES'],
+ ['Trips/Trekking/Annapurna Region/Annapurna Panorama Trek/10-All sizes-49025343761_0a26e66c99_o.jpg','ANNAPURNA'],
+ ['Trips/Trekking/Everest Region/Everest Base Camp Trek with Helicopter Return/03-Sunrise.jpg','EVEREST SUNRISE'],
+ ['Trips/Trekking/Everest Region/3 Days Everest Base Camp Trek/03-20110810 North Face of Everest Tibet China Panoramic.jpg','EVEREST PANORAMA']
+].map(([path,label])=>[new URL(path.split('/').map(encodeURIComponent).join('/'),document.baseURI).href,label]);
+bundle.script=bundle.script.replace(/const slides=\[\['assets\/hero\.jpg'[\s\S]*?\];/,()=> 'const slides='+JSON.stringify(titleSlides)+';');
+bundle.pages['index.html']=bundle.pages['index.html']
+ .replace(/--slide-photo:url\('assets\/hero\.jpg'\)/,()=>"--slide-photo:url('"+titleSlides[0][0]+"')")
+ .replace(/--slide-photo:url\('assets\/gokyo\.jpg'\)/,()=>"--slide-photo:url('"+titleSlides[1][0]+"')")
+ .replace('01 / ON THE TRAIL','01 / EVEREST');
+window.installBaseCampTripGalleries(bundle);
+// Match the logo palette throughout the embedded pages.
+const themeColors={'203c34':'007f91','182d28':'242424','f36b3f':'00afc4','f7f7f2':'f7fafb','202b25':'292929','69706a':'626b70','daddd4':'d8e3e6','52684c':'007f91','172921':'202020','ff845b':'36c4d5','355548':'006c7c','b54b2b':'007f91','ba4f2c':'007f91','ff855c':'00afc4','eceee6':'eaf4f6','cdd3c5':'ccdfe3','e7ebdf':'e0f1f4','d8dfd2':'d8e8ec','64725f':'626b70','f4f5e9':'f4fbfc','becaa9':'b5e5ec','bcc9c0':'c3dce1','b2bdaf':'c3dce1','abbfaf':'c3dce1','ecc083':'58d5e3','dfe5cc':'d9f0f4','6a7668':'626b70','658255':'007f91','e6eadb':'e3f3f6','5d7050':'007f91','68715f':'626b70','5c6754':'626b70','d5dacb':'ccdfe3','e8eee0':'edf5f7','b9c7b8':'c3d2d6','a9b8a5':'b8c7cc','dbe5d6':'e0edf0','aebcac':'b8c7cc','c2ceaf':'b5dfe6','748074':'626b70','4b6053':'007f91','778176':'626b70','bbc2b5':'c6d8dd','aab5a3':'b8c7cc','71806b':'626b70','f0f2eb':'edf6f8','d6dccf':'d8e3e6','f1f3ec':'edf6f8','9c5636':'007f91','eef1e5':'edf6f8','af502e':'007f91','586258':'586268','ccd4c2':'ccdfe3','56704c':'007f91','a95430':'007f91','79816f':'626b70','14221e':'242424','142c26':'242424','d5ddd6':'d8e3e6','f2f5ef':'edf6f8','52645a':'586268','e4eae1':'e0f1f4'};
+bundle.css=bundle.css.replace(/#([\da-f]{6})([\da-f]{2})?\b/gi,(color,rgb,alpha)=>themeColors[rgb.toLowerCase()]?'#'+themeColors[rgb.toLowerCase()]+(alpha||''):color);
+bundle.css+='\n.button-orange{color:#202020}.green{color:#007f91}.header{border-bottom-color:#d8e3e6}.regions-section .heading-aside{color:#c3dce1}';
+// Scale description rules at every breakpoint, preserving headings and controls.
+bundle.css=bundle.css.replace(/([^{}]+)\{([^{}]*)\}/g,(rule,selector,styles)=>{
+ const description=selector.split(',').every(part=>/^(?:\.hero-description|\.intro-strip\s*>?\s*p|\.heading-aside|\.story-copy.*p|\.story-copy \.lead|\.luxury-inner p|\.essentials>div>p|\.faq-list p|\.plan-copy>p|\.dialog-body>p|\.dialog-route|\.rich-copy$|\.rich-copy table|\.daily-itinerary \.rich-copy|\.trip-copy-section \.faq-list \.rich-copy|\.team-content p|\.hero-signature>p|\.small-cta p|\.page-heading>p)/.test(part.trim()));
+ return description?selector+'{'+styles.replace(/font-size:(\d*\.?\d+)(px|rem)/g,(_,size,unit)=>'font-size:'+Number((Number(size)*1.2).toFixed(3))+unit)+'}':rule;
+});
+// Desktop readability for navigation, slideshow controls, benefits and trip facts.
+bundle.css+=`\n@media(min-width:901px){
+ .header nav{font-size:16.8px}
+ .slide-controller>span,.hero-location{font-size:12px}
+ .slideshow-pause{font-size:13.2px}
+ .intro-strip>div,.intro-strip .text-link{font-size:16.8px}
+ .trip-fact-strip span{font-size:13.2px}
+ .trip-fact-strip strong{font-size:18px}
+ .trip-fact-strip>div{max-width:230px}
+ .trip-page-tabs a{font-size:15.6px}
+}
+@media(min-width:901px) and (max-width:1150px){
+ .header nav{font-size:15.6px}
+ .intro-strip>div{font-size:14.4px}
+}`;
+// Breadcrumbs are 20% larger than the region eyebrow (12px; 9px on mobile).
+bundle.css+='\n.trip-page-hero .breadcrumbs{font-size:14.4px}@media(max-width:600px){.trip-page-hero .breadcrumbs{font-size:10.8px}}';
+const itineraryIcons={
+ flight:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="m22 2-11 11"/>',
+ trek:'<circle cx="13" cy="4" r="2"/><path d="m7 21 3-7 4 3 1 4M10 14l1-7 4 4 3 1M7 10l4-3M20 10v11"/>',
+ rest:'<path d="M4 8h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Zm12 1h2a3 3 0 0 1 0 6h-2M3 22h16M7 2v3M11 2v3"/>',
+ arrival:'<path d="M3 21h18M3 10l7 3 5-7 3 1-3 8 6 2-1 3-17-6Z"/>',
+ drive:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 12h18M7 19v3M17 19v3"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/>',
+ summit:'<path d="m2 21 10-18 10 18ZM8 10l4 4 4-4M12 3V1h6v4h-5"/>',
+ tour:'<rect x="3" y="7" width="18" height="14" rx="2"/><path d="m7 7 2-4h6l2 4"/><circle cx="12" cy="14" r="4"/>',
+ camp:'<path d="m2 21 10-18 10 18Zm6 0 4-8 4 8M12 3V1"/>',
+ raft:'<path d="m4 15 3-7h10l3 7M2 19q3-4 6 0t6 0 6 0M5 2l14 13M3 2l2-1 3 3-2 2Z"/>'
+};
+function itineraryDayIcon(summary){
+ const title=summary.replace(/<[^>]*>/g,' ').toLowerCase();
+ const kind=/acclimati[sz]|\brest\b|leisure|free day/.test(title)?'rest':/arrival|arrive/.test(title)?'arrival':/\bfly\b|flight|departure|depart|helicopter/.test(title)?'flight':/summit|peak climbing|climb.*peak/.test(title)?'summit':/raft|canoe|boat/.test(title)?'raft':/\btrek|hike|hiking|walk/.test(title)?'trek':/drive|driving|bus|transfer/.test(title)?'drive':/camping|camp overnight/.test(title)?'camp':'tour';
+ return '<svg class="itinerary-day-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+itineraryIcons[kind]+'</svg>';
+}
+bundle.css+='\n.daily-itinerary summary .day-number{display:flex;flex-direction:column;align-items:flex-start;gap:8px}.itinerary-day-icon{display:block;width:32px;height:32px;padding:5px;box-sizing:content-box;border-radius:10px;background:#e3f3f6;color:#007f91;flex-shrink:0}@media(max-width:600px){.itinerary-day-icon{width:26px;height:26px;padding:4px;border-radius:8px}}';
+for(const file of Object.keys(bundle.pages)){
+ bundle.pages[file]=bundle.pages[file].replace(/<div class="unit-choice"[^>]*>.*?<\/div>/g,'').replace(/(<span class="measurement"[^>]*data-meters="([\d.]+)"[^>]*>)[^<]*(<\/span>)/g,(_,open,meters,close)=>open+Number(meters).toLocaleString('en-US')+'m / '+Math.round(Number(meters)/.3048).toLocaleString('en-US')+' ft / '+(Number(meters)/1609.344).toLocaleString('en-US',{maximumFractionDigits:2})+' mi'+close).replace(/%231e3932/gi,'%23242424').replace(/%23f16a3a/gi,'%2300afc4');
+ bundle.pages[file]=bundle.pages[file].replace(/<summary><span class="day-number">([^<]*)<\/span>([\s\S]*?)<\/summary>/g,(_,day,content)=>'<summary><span class="day-number">'+day+itineraryDayIcon(content)+'</span>'+content+'</summary>');
+ bundle.pages[file]=bundle.pages[file].replace(/(<h[2-4][^>]*>\s*(?:Package|Cost|Price)?\s*Includes?\s*<\/h[2-4]>\s*)<ul>/gi,'$1<ul class="package-included-list" role="list">');
+ bundle.pages[file]=bundle.pages[file].replace(/(<h[2-4][^>]*>\s*(?:Package|Cost|Price)?\s*Excludes?\s*<\/h[2-4]>\s*)<ul>/gi,'$1<ul class="package-excluded-list" role="list">');
+}
+// Both units are always visible; the old preference and toggle are obsolete.
+bundle.script=bundle.script.replace(/\(function\(\)\{let unit='meters';[\s\S]*?apply\(unit\)\}\)\(\);/,'');
+// Turn each itinerary into a connected timeline with readable activity details.
+bundle.script+=`\n document.querySelectorAll('.daily-itinerary details').forEach(day=>{
+ const summary=day.querySelector('summary'),number=summary?.querySelector('.day-number');
+ if(!number)return;
+ const icon=number.querySelector('svg'),title=number.nextElementSibling;
+ if(!icon||!title)return;
+ const heading=document.createElement('span');heading.className='itinerary-day-heading';
+ const label=document.createElement('strong');label.textContent=number.textContent.trim()+' ';
+ heading.append(label);while(title.firstChild)heading.append(title.firstChild);
+ number.replaceWith(icon);title.replaceWith(heading);
+ const copy=day.querySelector('.rich-copy');if(!copy)return;
+ const chips=document.createElement('div');chips.className='itinerary-day-facts';
+ const paths={time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',meal:'<path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v19M4 6h6M20 22V3c-4 0-5 6-5 10h5"/>',stay:'<path d="M3 18v4M21 18v4M3 18h18V9H3ZM3 4v5M7 13h3M14 13h3"/>'};
+ paths.breakfast='<path d="M3 10h12v5a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5Zm12 1h3a3 3 0 0 1 0 6h-3M2 23h16M6 3v3M10 2v4"/>';
+ paths.lunch='<path d="M3 12h18a9 9 0 0 1-18 0ZM7 22h10M7 3v5M12 2v6M17 3v5"/>';
+ paths.dinner='<path d="M3 4v5a3 3 0 0 0 6 0V4M6 4v18M20 13v9M20 4c-4 0-5 5-5 9h5"/><path d="M15 2a4 4 0 0 0 5 5 4 4 0 0 1-5-5Z"/>';
+ copy.querySelectorAll('span').forEach(span=>{
+  if(span.children.length||span.classList.contains('measurement')||span.closest('p,li,table'))return;
+  const value=span.textContent.replace(/\\s+/g,' ').trim();
+  const kind=/^(?:[\\d.]+(?:\\s*[-–]\\s*[\\d.]+)?\\s*(?:hours?|hrs?|minutes?|mins?))$/i.test(value)?'time':/^(?:breakfast|lunch|dinner|meals?)(?:\\s|$)/i.test(value)?'meal':/^(?:hotel|guest house|teahouse|tea house|lodge|camping|overnight)(?:\\s|$)/i.test(value)?'stay':null;
+  if(!kind)return;
+  const meals=kind==='meal'?value.match(/breakfast|lunch|dinner/gi):null;
+  const entries=meals?[...new Set(meals.map(meal=>meal.toLowerCase()))].map(meal=>({kind:meal,label:meal[0].toUpperCase()+meal.slice(1)})):[{kind,label:value}];
+  entries.forEach(entry=>{
+   const chip=document.createElement('span');chip.className='itinerary-fact';
+   chip.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[entry.kind]+'</svg>';
+   chip.dataset.fact=entry.kind;
+   chip.append(document.createTextNode(entry.label));chips.append(chip);
+  });
+  const row=span.parentElement;
+  if(row&&row.textContent.replace(/\\s+/g,' ').trim()===value)row.remove();else span.remove();
+ });
+ // Include time mentioned in the day title or prose when no duration row exists.
+ if(!chips.querySelector('[data-fact="time"]')){
+  const time=(heading.textContent+' '+copy.textContent).match(/\\b\\d+(?:\\.\\d+)?(?:\\s*[-–]\\s*\\d+(?:\\.\\d+)?)?\\s*(?:hours?|hrs?|minutes?|mins?)\\b|\\b\\d{1,2}(?::\\d{2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)\\b/i);
+  if(time){
+   const chip=document.createElement('span');chip.className='itinerary-fact';chip.dataset.fact='time';
+   chip.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths.time+'</svg>';
+   chip.append(document.createTextNode(time[0]));chips.prepend(chip);
+  }
+ }
+ if(chips.children.length)copy.append(chips);
+});`;
+bundle.css+=`\n.daily-itinerary{--timeline-icon:48px;--timeline-gap:20px;position:relative}
+.daily-itinerary details{position:relative;border:0;padding-bottom:8px}
+.daily-itinerary details:not(:last-child)::before{content:'';position:absolute;left:23px;top:48px;bottom:-24px;border-left:1px dashed #b5dfe6;pointer-events:none}
+.daily-itinerary summary{grid-template-columns:var(--timeline-icon) minmax(0,1fr) 18px;gap:var(--timeline-gap);padding:22px 0;position:relative;align-items:start}
+.daily-itinerary summary .itinerary-day-icon{width:24px;height:24px;padding:12px;box-sizing:content-box;border-radius:50%;background:#007f91;color:white;box-shadow:0 0 0 5px var(--paper);position:relative}
+.daily-itinerary .itinerary-day-heading{font-size:17px;font-weight:600;line-height:1.6;padding-top:8px;color:var(--ink)}
+.itinerary-day-heading strong{font:inherit}
+.daily-itinerary summary b{margin-top:10px;color:#007f91}
+.daily-itinerary .rich-copy{padding:0 0 24px 68px}
+.daily-itinerary details:not(:last-child) .rich-copy{border-bottom:1px solid var(--line);margin-left:68px;padding-left:0}
+.itinerary-day-facts{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.itinerary-fact{display:inline-flex;align-items:center;gap:9px;padding:8px 12px;background:#edf6f8;border:1px solid #d8e8ec;border-radius:8px;color:#292929;font-size:14px;font-weight:600;line-height:1.5}
+.itinerary-fact svg{width:21px;height:21px;flex-shrink:0;color:#007f91}
+@media(max-width:600px){.daily-itinerary{--timeline-icon:38px;--timeline-gap:12px}.daily-itinerary summary{gap:12px}.daily-itinerary summary .itinerary-day-icon{width:20px;height:20px;padding:9px}.daily-itinerary details:not(:last-child)::before{left:18px;top:38px}.daily-itinerary .itinerary-day-heading{font-size:15px;padding-top:5px}.daily-itinerary .rich-copy{padding-left:50px}.daily-itinerary details:not(:last-child) .rich-copy{margin-left:50px;padding-left:0}.itinerary-fact{font-size:12px;padding:7px 9px}}
+`;
+bundle.css+='\n.rich-copy .package-included-list,.rich-copy .package-excluded-list{list-style:none;padding-left:0}.package-included-list>li,.package-excluded-list>li{position:relative;padding-left:30px;margin-bottom:12px}.package-included-list>li::before{content:"";position:absolute;left:3px;top:.55em;width:7px;height:13px;border-right:2px solid #007f91;border-bottom:2px solid #007f91;transform:rotate(45deg)}.package-excluded-list>li::before{content:"";position:absolute;left:2px;top:.925em;width:.75em;height:.75em;transform:translateY(-50%);background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M4 4l12 12M4 16L16 4%27 fill=%27none%27 stroke=%27%23d32f2f%27 stroke-width=%272.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E")}';
+window.installBaseCampItineraryLocationFacts(bundle);
+window.installBaseCampTripRegionTabs(bundle);
+window.installBaseCampDestinations(bundle);
+window.installBaseCampDestinationExperiences(bundle);
+window.installBaseCampHomepageTours(bundle);
+window.installBaseCampPackageDetails(bundle);
+window.installBaseCampEquipment(bundle);
+window.installBaseCampAffiliations(bundle);
+window.installBaseCampTeamProfilePhotos(bundle);
+window.installBaseCampFooter(bundle);
+window.installBaseCampPackageCards(bundle);
+window.installBaseCampPageLayout(bundle);
+window.installBaseCampContactBar(bundle);
 const urls={};for(const [name,asset] of Object.entries(bundle.assets)){const raw=atob(asset.data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);urls[name]=URL.createObjectURL(new Blob([bytes],{type:asset.type}));}
 const replaceAssets=text=>text.replace(/assets\/[A-Za-z0-9_./% -]+\.(?:jpg|jpeg|png|woff2|txt)/g,name=>urls[name]||name);
 const frame=document.createElement('iframe');frame.title='Base Camp Adventure website';document.querySelector('.loading').replaceWith(frame);
@@ -19,3 +156,5 @@ function render(){
 }
 window.__baseCampAssets=urls;addEventListener('hashchange',render);render();
 </script></body></html>
+
+
